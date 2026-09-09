@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function text(value, maximum) { return value is string && value.size() > 0 && value.size() <= maximum; }
+    function profile(data, id) {
+      return data.keys().hasAll(['id', 'name']) && data.keys().hasOnly(['id', 'name'])
+        && data.id == id && text(data.name, 30);
+    }
+    match /users/{uid} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create, update: if signedIn() && request.auth.uid == uid && profile(request.resource.data, uid);
+      match /friends/{friendID} {
+        allow read: if signedIn() && request.auth.uid == uid;
+        allow create, update: if signedIn() && request.auth.uid == uid && friendID != uid
+          && profile(request.resource.data, friendID)
+          && exists(/databases/$(database)/documents/users/$(friendID));
+      }
+    }
+    match /emas/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasAll(['id','ownerID','name','goal','message','fulfilled','createdAt'])
+        && request.resource.data.keys().hasOnly(['id','ownerID','name','goal','message','fulfilled','createdAt'])
+        && request.resource.data.id == id && request.resource.data.ownerID == request.auth.uid
+        && text(request.resource.data.name, 30) && text(request.resource.data.goal, 60)
+        && request.resource.data.message is string && request.resource.data.message.size() <= 300
+        && request.resource.data.fulfilled == false && request.resource.data.createdAt is number;
+      allow update: if signedIn() && resource.data.ownerID == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fulfilled'])
+        && request.resource.data.fulfilled is bool;
+    }
+    match /omamori/{id} {
+      function participant() {
+        return signedIn() && (resource.data.senderID == request.auth.uid || resource.data.recipientID == request.auth.uid);
+      }
+      // Unguessable UUID links are bearer invitations. Never allow listing unclaimed gifts.
+      allow get: if signedIn() && (participant() || resource.data.recipientID == '');
+      allow list: if participant();
+      allow create: if signedIn()
+        && id.matches('^[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}$')
+        && request.resource.data.keys().hasAll(['id','senderID','senderName','recipientID','recipientName','message','blessing','color','song','emaID','createdAt'])
+        && request.resource.data.keys().hasOnly(['id','senderID','senderName','recipientID','recipientName','message','blessing','color','song','emaID','createdAt'])
+        && request.resource.data.id == id && request.resource.data.senderID == request.auth.uid
+        && request.resource.data.recipientID is string
+        && (request.resource.data.recipientID == '' || exists(/databases/$(database)/documents/users/$(request.resource.data.recipientID)))
+        && text(request.resource.data.senderName, 30) && text(request.resource.data.recipientName, 30)
+        && text(request.resource.data.message, 500) && text(request.resource.data.blessing, 12)
+        && request.resource.data.color in ['coral','cream','lavender','sage','blue']
+        && request.resource.data.song is map
+        && request.resource.data.song.keys().hasAll(['id','title','artist','url','previewURL','artworkURL'])
+        && request.resource.data.song.keys().hasOnly(['id','title','artist','url','previewURL','artworkURL'])
+        && text(request.resource.data.song.id, 128) && text(request.resource.data.song.title, 300)
+        && request.resource.data.song.artist is string && request.resource.data.song.artist.size() <= 300
+        && text(request.resource.data.song.url, 2048)
+        && request.resource.data.song.url.matches('^https://(music[.]apple[.]com|itunes[.]apple[.]com|open[.]spotify[.]com|www[.]youtube[.]com|youtube[.]com|youtu[.]be|music[.]youtube[.]com)/.*')
+        && request.resource.data.song.previewURL is string && request.resource.data.song.previewURL.size() <= 2048
+        && request.resource.data.song.artworkURL is string && request.resource.data.song.artworkURL.size() <= 2048
+        && request.resource.data.emaID is string
+        && (request.resource.data.emaID == '' || (exists(/databases/$(database)/documents/emas/$(request.resource.data.emaID))
+            && get(/databases/$(database)/documents/emas/$(request.resource.data.emaID)).data.ownerID == request.resource.data.recipientID))
+        && request.resource.data.createdAt is number;
+      allow update: if signedIn() && resource.data.recipientID == ''
+        && resource.data.senderID != request.auth.uid
+        && request.resource.data.recipientID == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recipientID']);
+    }
+  }
+}

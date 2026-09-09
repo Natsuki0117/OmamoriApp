@@ -1,0 +1,8 @@
+.DS_Store
+DerivedData/
+build/
+xcuserdata/
+*.xcuserstate
+OmamoriApp/GoogleService-Info.plist
+Backend/.firebaserc
+Backend/*-debug.log
