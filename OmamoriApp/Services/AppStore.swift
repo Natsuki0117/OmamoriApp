@@ -145,6 +145,32 @@ final class AppStore: ObservableObject {
             if let index = emas.firstIndex(where: { $0.id == ema.id }) { emas[index] = value }
         }
     }
+    func dedicate(_ charm: Omamori, message: String) async throws {
+        let revision = generation
+        guard !myID.isEmpty, charm.recipientID == myID else {
+            throw AppIssue.message("受け取ったお守りだけ奉納できます。")
+        }
+        guard !message.trimmed.isEmpty, message.count <= 300 else {
+            throw AppIssue.message("お礼のメッセージを300文字以内で入力してください。")
+        }
+        let source = isDemo ? demo.charms : charms
+        guard var current = source.first(where: { $0.id == charm.id }), current.recipientID == myID else {
+            throw AppIssue.message("お守りが見つかりません。コレクションを更新してください。")
+        }
+        guard current.dedicatedAt == nil else { throw AppIssue.message("このお守りは奉納済みです。") }
+        current.dedicatedAt = Date()
+        current.thankYouMessage = message.trimmed
+        if isDemo {
+            var next = demo
+            if let index = next.charms.firstIndex(where: { $0.id == current.id }) { next.charms[index] = current }
+            try saveDemo(next)
+            updateDemoView()
+        } else if let cloud {
+            try await cloud.dedicate(current)
+            guard revision == generation else { throw CancellationError() }
+            if let index = charms.firstIndex(where: { $0.id == current.id }) { charms[index] = current }
+        } else { throw AppIssue.message("ログインしてください。") }
+    }
     func addFriend(id: String) async throws {
         let revision = generation
         let owner = myID

@@ -3,10 +3,14 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.scenePhase) var phase
+    @State private var showingWelcome = false
     var body: some View {
         Group {
-            if store.user == nil { WelcomeView() }
-            else { MainTabs() }
+            if store.user == nil || showingWelcome {
+                WelcomeView(onContinue: { showingWelcome = false })
+            } else {
+                MainTabs(onBackToWelcome: { showingWelcome = true })
+            }
         }
         .tint(ShrineTheme.vermilion).foregroundStyle(ShrineTheme.ink)
         .task { await store.restore() }
@@ -21,13 +25,20 @@ struct ContentView: View {
 
 struct MainTabs: View {
     @EnvironmentObject var store: AppStore
+    var onBackToWelcome: () -> Void
+    @State private var selectedTab = 0
     var body: some View {
-        TabView {
-            NavigationStack { HomeView() }.tabItem { Label("おまもり", systemImage: "house") }
-            NavigationStack { EmaFeedView() }.tabItem { Label("みんなの絵馬", systemImage: "leaf") }
-            NavigationStack { CreateHubView() }.tabItem { Label("つくる", systemImage: "plus.circle") }
-            NavigationStack { CollectionView() }.tabItem { Label("たからもの", systemImage: "square.grid.2x2") }
-            NavigationStack { ProfileView() }.tabItem { Label("わたし", systemImage: "person.crop.circle") }
+        TabView(selection: $selectedTab) {
+            NavigationStack { HomeView().environment(\.rootBackAction, onBackToWelcome) }
+                .tabItem { Label("おまもり", systemImage: "house") }.tag(0)
+            NavigationStack { EmaFeedView().environment(\.rootBackAction, { selectedTab = 0 }) }
+                .tabItem { Label("みんなの絵馬", systemImage: "leaf") }.tag(1)
+            NavigationStack { CreateHubView().environment(\.rootBackAction, { selectedTab = 0 }) }
+                .tabItem { Label("つくる", systemImage: "plus.circle") }.tag(2)
+            NavigationStack { CollectionView().environment(\.rootBackAction, { selectedTab = 0 }) }
+                .tabItem { Label("コレクション", systemImage: "square.grid.2x2") }.tag(3)
+            NavigationStack { ProfileView().environment(\.rootBackAction, { selectedTab = 0 }) }
+                .tabItem { Label("わたし", systemImage: "person.crop.circle") }.tag(4)
         }
         .toolbarBackground(ShrineTheme.paper, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
@@ -43,6 +54,7 @@ struct MainTabs: View {
 
 struct WelcomeView: View {
     @EnvironmentObject var store: AppStore
+    var onContinue: () -> Void = {}
     @State private var auth = false
     var body: some View {
         ScrollView {
@@ -57,11 +69,13 @@ struct WelcomeView: View {
                     .multilineTextAlignment(.center).lineSpacing(7).foregroundStyle(ShrineTheme.muted)
                 VStack(spacing: 14) {
                     if store.pendingURL != nil { Label("届いたお守りがあります。ログインして受け取りましょう。", systemImage: "gift").font(.subheadline) }
-                    if store.configured {
+                    if store.user != nil {
+                        Button("アプリに戻る", action: onContinue).buttonStyle(PrimaryButton())
+                    } else if store.configured {
                         Button("ログイン・新規登録") { auth = true }.buttonStyle(PrimaryButton())
-                        Button("端末内で体験する") { store.startDemo() }.padding(8)
+                        Button("端末内で体験する") { store.startDemo(); onContinue() }.padding(8)
                     } else {
-                        Button("端末内で体験する") { store.startDemo() }.buttonStyle(PrimaryButton())
+                        Button("端末内で体験する") { store.startDemo(); onContinue() }.buttonStyle(PrimaryButton())
                         Text("Firebase接続前でも、作成・応援・受け取りを試せます。実際のユーザー間共有にはFirebaseの設定が必要です。")
                             .font(.footnote).foregroundStyle(ShrineTheme.muted).lineSpacing(4)
                     }
@@ -110,7 +124,7 @@ struct AuthView: View {
             }
             if let message { Text(message).font(.subheadline).foregroundStyle(ShrineTheme.vermilion) }
         }.navigationTitle(register ? "はじめまして" : "おかえりなさい")
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() }.disabled(busy) } }
+            .appBackButton(disabled: busy)
             .interactiveDismissDisabled(busy)
     }
 }
@@ -153,6 +167,7 @@ struct HomeView: View {
                 }.buttonStyle(.plain)
             }.padding(22).frame(maxWidth: 700).frame(maxWidth: .infinity)
         }.background(ShrineTheme.paper.ignoresSafeArea()).navigationTitle("おまもり").navigationBarTitleDisplayMode(.inline)
+            .appBackButton()
             .refreshable { await store.refresh() }
     }
 }

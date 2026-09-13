@@ -30,17 +30,21 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-        A10000000000000000000001 = {
-            isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-            membershipExceptions = (Info.plist,);
-            target = 8035C0823051D7CF0064D6A0;
-        };
+		A10000000000000000000001 /* Exceptions for "OmamoriApp" folder in "OmamoriApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8035C0823051D7CF0064D6A0 /* OmamoriApp */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8035C0853051D7CF0064D6A0 /* OmamoriApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (A10000000000000000000001,);
+			exceptions = (
+				A10000000000000000000001 /* Exceptions for "OmamoriApp" folder in "OmamoriApp" target */,
+			);
 			path = OmamoriApp;
 			sourceTree = "<group>";
 		};
@@ -401,15 +405,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				INFOPLIST_FILE = OmamoriApp/Info.plist;
-				CODE_SIGN_ENTITLEMENTS = OmamoriApp/OmamoriApp.entitlements;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = OmamoriApp/OmamoriApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"OmamoriApp/Preview Content\"";
 				DEVELOPMENT_TEAM = ZT33SY55VZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OmamoriApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -432,15 +436,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				INFOPLIST_FILE = OmamoriApp/Info.plist;
-				CODE_SIGN_ENTITLEMENTS = OmamoriApp/OmamoriApp.entitlements;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = OmamoriApp/OmamoriApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"OmamoriApp/Preview Content\"";
 				DEVELOPMENT_TEAM = ZT33SY55VZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OmamoriApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

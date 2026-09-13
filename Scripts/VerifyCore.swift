@@ -57,6 +57,34 @@ struct Verify {
         charm.message = " "
         do { try Validation.charm(charm); throw AppIssue.message("empty message accepted") }
         catch { try check(error.localizedDescription.contains("500文字"), "reject empty message") }
+        store.startDemo(as: AppStore.demoPeople[1])
+        guard let gift = store.received.first(where: { $0.id == charm.id }) else { throw AppIssue.message("missing gift") }
+        try await store.dedicate(gift, message: "勇気をくれて、ありがとう。")
+        try check(store.received.first { $0.id == gift.id }?.thankYouMessage == "勇気をくれて、ありがとう。", "dedication saves thank-you message")
+        let dedicated = CollectionSelection.charms(store.charms, userID: store.myID, filter: .dedicated, order: .newest)
+        try check(dedicated.count == 1 && dedicated[0].id == gift.id, "dedicated filter")
+        let reloaded = AppStore(storageURL: path)
+        reloaded.startDemo(as: AppStore.demoPeople[1])
+        try check(reloaded.received.first { $0.id == gift.id }?.dedicatedAt != nil, "dedication persists after restart")
+        do { try await store.dedicate(gift, message: "もう一度"); throw AppIssue.message("double dedication accepted") }
+        catch { try check(error.localizedDescription.contains("奉納済み"), "reject repeated dedication") }
+        store.startDemo()
+        do { try await store.dedicate(gift, message: "他人"); throw AppIssue.message("wrong user accepted") }
+        catch { try check(error.localizedDescription.contains("受け取った"), "sender cannot dedicate recipient's charm") }
+        try check(store.sent.first { $0.id == gift.id }?.thankYouMessage != nil, "sender can read thank-you")
+        var first = gift; first.id = "first"; first.createdAt = Date(timeIntervalSinceReferenceDate: 1)
+        var second = gift; second.id = "second"; second.createdAt = Date(timeIntervalSinceReferenceDate: 2)
+        try check(CollectionSelection.charms([first, second], userID: "demo-haru", filter: .received, order: .oldest).map(\.id) == ["first", "second"], "oldest sorting")
+        try check(CollectionSelection.charms([first, second], userID: "demo-haru", filter: .received, order: .newest).map(\.id) == ["second", "first"], "newest sorting")
+        try check(CollectionSelection.charms([first, second], userID: "stranger", filter: .all, order: .newest).isEmpty, "exclude unrelated user's charms")
+        let publicEma = Ema(id: "supported", ownerID: "someone", name: "友達", goal: "願い", message: "")
+        let unrelatedEma = Ema(id: "unrelated", ownerID: "another", name: "別の人", goal: "別の願い", message: "")
+        first.emaID = publicEma.id
+        let selected = CollectionSelection.emas([ema, publicEma, unrelatedEma], charms: [first, first], userID: "demo-me", filter: .all, order: .newest)
+        try check(Set(selected.map(\.id)) == Set([ema.id, publicEma.id]), "own and supported emas without duplicates")
+        try check(CollectionSelection.emas([ema, publicEma], charms: [first], userID: "demo-me", filter: .supported, order: .newest).map(\.id) == [publicEma.id], "supported ema filter")
+        let legacy = try JSONDecoder().decode(Omamori.self, from: JSONEncoder().encode(gift))
+        try check(legacy.dedicatedAt == nil, "legacy records without dedication fields decode")
         print("\(checks) checks passed")
     }
 }

@@ -28,6 +28,7 @@ struct CreateHubView: View {
                 }.buttonStyle(.plain)
             }.padding(22).frame(maxWidth: 600).frame(maxWidth: .infinity)
         }.background(ShrineTheme.paper.ignoresSafeArea()).navigationTitle("つくる").navigationBarTitleDisplayMode(.inline)
+            .appBackButton()
     }
 }
 
@@ -129,6 +130,7 @@ struct CharmComposer: View {
                     .buttonStyle(PrimaryButton()).disabled(!valid || busy || created != nil)
             }.padding(22).frame(maxWidth: 600).frame(maxWidth: .infinity)
         }.background(ShrineTheme.paper.ignoresSafeArea()).navigationTitle("お守りをつくる").navigationBarTitleDisplayMode(.inline)
+            .appBackButton(disabled: busy)
             .onAppear {
                 guard !initialized else { return }; initialized = true
                 senderName = store.user?.name ?? ""
@@ -188,7 +190,7 @@ struct SongPicker: View {
                 }
             } footer: { Text("Apple Music・Spotify・YouTubeのリンクに対応しています。") }
         }.navigationTitle("贈る一曲").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("閉じる") { dismiss() } } }
+            .appBackButton()
     }
     private func search() {
         guard !query.trimmed.isEmpty, !busy else { return }
@@ -246,7 +248,8 @@ struct EmaComposer: View {
                     .buttonStyle(PrimaryButton()).disabled(busy || !consent || name.trimmed.isEmpty || goal.trimmed.isEmpty || goal.count > 60 || name.count > 30 || message.count > 300 || success)
             }.padding(22).frame(maxWidth: 600).frame(maxWidth: .infinity)
         }.background(ShrineTheme.paper.ignoresSafeArea()).navigationTitle("絵馬を書く").navigationBarTitleDisplayMode(.inline)
+            .appBackButton(disabled: busy)
             .onAppear { if name.isEmpty { name = store.user?.name ?? "" } }
-            .alert("願いを奉納しました", isPresented: $success) { Button("みんなの応援を待つ") { dismiss() } } message: { Text("「みんなの絵馬」と「たからもの」に絵馬が飾られました。") }
+            .alert("願いを奉納しました", isPresented: $success) { Button("みんなの応援を待つ") { dismiss() } } message: { Text("「みんなの絵馬」と「コレクション」に絵馬が飾られました。") }
     }
 }

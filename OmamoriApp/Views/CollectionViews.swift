@@ -21,6 +21,7 @@ struct EmaFeedView: View {
                 }
             }.padding(22).frame(maxWidth: 560).frame(maxWidth: .infinity)
         }.background(ShrineTheme.paper.ignoresSafeArea()).navigationTitle("みんなの絵馬").navigationBarTitleDisplayMode(.inline)
+            .appBackButton()
             .toolbar { ToolbarItem(placement: .primaryAction) { NavigationLink { EmaComposer() } label: { Image(systemName: "square.and.pencil").accessibilityLabel("絵馬を書く") } } }
             .refreshable { await store.refresh() }
     }
@@ -57,44 +58,7 @@ struct EmaDetail: View {
                 }
             }.padding(24).frame(maxWidth: 560).frame(maxWidth: .infinity)
         }.background(ShrineTheme.paper.ignoresSafeArea()).navigationTitle("ひとつの願い").navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-struct CollectionView: View {
-    @EnvironmentObject var store: AppStore
-    @State private var kind = 0
-    @State private var filter = 0
-    @State private var emaFilter = 0
-    var charms: [Omamori] { filter == 1 ? store.received : filter == 2 ? store.sent : store.charms }
-    var emas: [Ema] { store.emas.filter { $0.ownerID == store.myID && (emaFilter == 0 || $0.fulfilled == (emaFilter == 2)) } }
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 22) {
-                PageHeading(eyebrow: "TAKARAMONO", title: "想いが並ぶ、たからもの", subtitle: "もらった勇気も、贈ったエールも。")
-                Picker("コレクション", selection: $kind) { Text("お守り").tag(0); Text("絵馬").tag(1) }.pickerStyle(.segmented)
-                if kind == 0 {
-                    Picker("お守りの絞り込み", selection: $filter) { Text("すべて").tag(0); Text("もらった").tag(1); Text("贈った").tag(2) }.pickerStyle(.segmented)
-                    if charms.isEmpty { EmptyCollection(title: "まだお守りがありません", message: "誰かへの想いを、ひとつ結んでみましょう。", symbol: "gift") }
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 145), spacing: 16)], spacing: 18) {
-                        ForEach(charms) { charm in
-                            NavigationLink { CharmDetail(charm: charm) } label: {
-                                VStack(spacing: 12) {
-                                    CharmArtwork(color: charm.color, blessing: charm.blessing, width: 88)
-                                    Text(charm.blessing).font(.headline)
-                                    Text(charm.senderID == store.myID ? "\(charm.recipientName)へ" : "\(charm.senderName)より").font(.subheadline).foregroundStyle(ShrineTheme.muted)
-                                    Text(charm.senderID == store.myID ? (charm.recipientID.isEmpty ? "お渡し待ち" : "贈ったお守り") : "もらったお守り")
-                                        .font(.caption).padding(.horizontal, 10).padding(.vertical, 5).background(ShrineTheme.paper, in: Capsule())
-                                }.frame(maxWidth: .infinity).padding(.vertical, 20).background(.white.opacity(0.75), in: RoundedRectangle(cornerRadius: 24))
-                            }.buttonStyle(.plain)
-                        }
-                    }
-                } else {
-                    Picker("絵馬の絞り込み", selection: $emaFilter) { Text("すべて").tag(0); Text("挑戦中").tag(1); Text("叶った").tag(2) }.pickerStyle(.segmented)
-                    if emas.isEmpty { EmptyCollection(title: "願いを残してみよう", message: "あなたが奉納した絵馬が並びます。", symbol: "leaf") }
-                    ForEach(emas) { ema in NavigationLink { EmaDetail(ema: ema) } label: { EmaArtwork(goal: ema.goal, name: ema.name, fulfilled: ema.fulfilled) }.buttonStyle(.plain) }
-                }
-            }.padding(22).frame(maxWidth: 700).frame(maxWidth: .infinity)
-        }.background(ShrineTheme.paper.ignoresSafeArea()).navigationTitle("たからもの").navigationBarTitleDisplayMode(.inline).refreshable { await store.refresh() }
+            .appBackButton(disabled: busy)
     }
 }
 
@@ -162,6 +126,7 @@ struct ProfileView: View {
                 Button(store.isDemo ? "体験を終了する" : "ログアウト") { store.signOut() }.padding()
             }.padding(22).frame(maxWidth: 600).frame(maxWidth: .infinity)
         }.background(ShrineTheme.paper.ignoresSafeArea()).navigationTitle("わたし").navigationBarTitleDisplayMode(.inline)
+            .appBackButton(disabled: busy)
             .alert("NFC", isPresented: Binding(get: { nfc.message != nil }, set: { if !$0 { nfc.message = nil } })) { Button("閉じる") { nfc.message = nil } } message: { Text(nfc.message ?? "") }
     }
     private func stat(_ title: String, _ count: Int) -> some View {

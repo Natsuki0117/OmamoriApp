@@ -51,6 +51,8 @@ struct Omamori: Codable, Identifiable, Hashable {
     var song: Song
     var emaID: String
     var createdAt: Date = Date()
+    var dedicatedAt: Date? = nil
+    var thankYouMessage: String? = nil
     var shareURL: URL { URL(string: "omamori://receive/\(id)")! }
 }
 

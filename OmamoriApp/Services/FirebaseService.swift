@@ -123,6 +123,16 @@ final class FirebaseService {
         let url = URL(string: "\(root)/omamori/\(charm.id)?updateMask.fieldPaths=recipientID")!
         _ = try await request(url, method: "PATCH", body: ["fields": ["recipientID": ["stringValue": userID]]], token: try await token())
     }
+    func dedicate(_ charm: Omamori) async throws {
+        guard let date = charm.dedicatedAt, let message = charm.thankYouMessage else {
+            throw AppIssue.message("奉納する内容がありません。")
+        }
+        let url = URL(string: "\(root)/omamori/\(charm.id)?updateMask.fieldPaths=dedicatedAt&updateMask.fieldPaths=thankYouMessage")!
+        _ = try await request(url, method: "PATCH", body: ["fields": [
+            "dedicatedAt": ["doubleValue": date.timeIntervalSinceReferenceDate],
+            "thankYouMessage": ["stringValue": message]
+        ]], token: try await token())
+    }
     static func encodeValue(_ value: Any) -> [String: Any] {
         if let string = value as? String { return ["stringValue": string] }
         if let number = value as? NSNumber {

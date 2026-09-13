@@ -50,8 +50,18 @@ struct CharmDetail: View {
                         }
                     }.transition(.opacity)
                 }
+                if let date = current.dedicatedAt, let thanks = current.thankYouMessage {
+                    PaperCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Label("奉納したお守り", systemImage: "checkmark.seal").font(.headline).foregroundStyle(ShrineTheme.vermilion)
+                            Text("\(current.recipientName)からのお礼").font(.subheadline)
+                            Text(thanks).lineSpacing(7)
+                            Text(date, style: .date).font(.caption).foregroundStyle(ShrineTheme.muted)
+                        }
+                    }
+                }
                 if needsClaim {
-                    Text("受け取ると、あなたの「たからもの」に残ります。") .font(.subheadline).foregroundStyle(ShrineTheme.muted)
+                    Text("受け取ると、あなたの「コレクション」に残ります。") .font(.subheadline).foregroundStyle(ShrineTheme.muted)
                     Button {
                         busy = true
                         Task {
@@ -73,6 +83,7 @@ struct CharmDetail: View {
                 Text(current.createdAt, style: .date).font(.caption).foregroundStyle(ShrineTheme.muted)
             }.padding(24).frame(maxWidth: 580).frame(maxWidth: .infinity)
         }.background(ShrineTheme.paper.ignoresSafeArea()).navigationTitle(current.blessing).navigationBarTitleDisplayMode(.inline)
+            .appBackButton(disabled: busy)
             .onDisappear { player.stop() }
             .sheet(isPresented: $sharing) { ActivitySheet(items: [current.shareURL]) }
             .alert("NFC", isPresented: Binding(get: { nfc.message != nil }, set: { if !$0 { nfc.message = nil } })) { Button("閉じる") { nfc.message = nil } } message: { Text(nfc.message ?? "") }

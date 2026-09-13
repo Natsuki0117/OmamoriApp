@@ -61,6 +61,11 @@ service cloud.firestore {
         && (request.resource.data.emaID == '' || (exists(/databases/$(database)/documents/emas/$(request.resource.data.emaID))
             && get(/databases/$(database)/documents/emas/$(request.resource.data.emaID)).data.ownerID == request.resource.data.recipientID))
         && request.resource.data.createdAt is number;
+      allow update: if signedIn() && resource.data.recipientID == request.auth.uid
+        && !('dedicatedAt' in resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dedicatedAt', 'thankYouMessage'])
+        && request.resource.data.dedicatedAt is number
+        && text(request.resource.data.thankYouMessage, 300);
       allow update: if signedIn() && resource.data.recipientID == ''
         && resource.data.senderID != request.auth.uid
         && request.resource.data.recipientID == request.auth.uid
